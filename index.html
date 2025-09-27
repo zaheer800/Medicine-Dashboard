@@ -1,115 +1,1359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Medicine Dashboard</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2 { text-align: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
-    .progress { font-weight: bold; }
-    button { margin: 10px; padding: 10px 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Medicine Tracker</title>
+    
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .google-signin-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+        }
+
+        .google-signin-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 15px;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+
+        .signout-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .signout-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .date-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .date-nav button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .date-nav button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .current-date {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #4a5568;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .taken { color: #48bb78; }
+        .missed { color: #f56565; }
+        .upcoming { color: #4299e1; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .medicine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .time-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .time-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .time-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        .morning { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
+        .afternoon { background: linear-gradient(135deg, #a8edea, #fed6e3); }
+        .evening { background: linear-gradient(135deg, #ff9a9e, #fecfef); }
+        .night { background: linear-gradient(135deg, #667eea, #764ba2); }
+
+        .time-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        .medicine-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 15px;
+            background: #f7fafc;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .medicine-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .medicine-item.taken {
+            background: #f0fff4;
+            border-color: #48bb78;
+        }
+
+        .medicine-checkbox {
+            margin-right: 15px;
+            transform: scale(1.3);
+        }
+
+        .medicine-info {
+            flex: 1;
+        }
+
+        .medicine-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .medicine-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .sync-status.syncing { color: #4299e1; }
+        .sync-status.synced { color: #48bb78; }
+        .sync-status.error { color: #f56565; }
+
+        .family-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .family-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .family-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-button {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .location-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .location-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-home { background: #c6f6d5; color: #22543d; }
+        .status-away { background: #fed7e2; color: #702459; }
+
+        .config-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .config-input {
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            width: 300px;
+        }
+
+        .permission-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .granted { background: #c6f6d5; color: #22543d; }
+        .denied { background: #fed7e2; color: #702459; }
+        .pending { background: #fef5e7; color: #744210; }
+
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .medicine-grid { grid-template-columns: 1fr; }
+            .feature-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+            .header h1 { font-size: 2rem; }
+            .user-info { flex-direction: column; gap: 15px; }
+            .config-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .config-input { width: 100%; }
+        }
+    </style>
 </head>
 <body>
-  <h2>30-Day Medicine Progress Dashboard</h2>
+    <div class="container">
+        <!-- Authentication Section -->
+        <div id="authSection" class="auth-section">
+            <h2>🔐 Sign in with Google</h2>
+            <p>Connect your Google account to access sheets, calendar, and location services</p>
+            <button id="googleSignInBtn" class="google-signin-btn">
+                <span>📊</span> Sign in with Google
+            </button>
+        </div>
 
-  <table id="dash">
-    <thead>
-      <tr>
-        <th>Day</th>
-        <th>Date</th>
-        <th>Morning</th>
-        <th>Afternoon</th>
-        <th>Evening</th>
-        <th>Night</th>
-        <th>Progress</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Rows will be generated by JS -->
-    </tbody>
-  </table>
+        <!-- Main App (Hidden until authenticated) -->
+        <div id="mainApp" class="auth-section hidden">
+            <div class="header">
+                <div class="user-info">
+                    <div class="user-details">
+                        <img id="userAvatar" class="user-avatar" src="" alt="User">
+                        <div>
+                            <div><strong id="userName"></strong></div>
+                            <div id="userEmail" style="color: #666; font-size: 0.9rem;"></div>
+                        </div>
+                    </div>
+                    <button id="signOutBtn" class="signout-btn">Sign Out</button>
+                </div>
+                
+                <h1>🏥 Family Medicine Tracker</h1>
+                <div class="date-nav">
+                    <button onclick="changeDate(-1)">← Previous</button>
+                    <div class="current-date" id="currentDate">Loading...</div>
+                    <button onclick="changeDate(1)">Next →</button>
+                </div>
+                
+                <div class="sync-status" id="syncStatus">
+                    <span>🔄</span> <span id="syncText">Connecting to Google Sheets...</span>
+                </div>
+            </div>
 
-  <div style="text-align:center;">
-    <button onclick="saveAll()">Save Progress</button>
-  </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number taken" id="takenCount">0</div>
+                    <div class="stat-label">Medicines Taken</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number missed" id="missedCount">0</div>
+                    <div class="stat-label">Missed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number upcoming" id="upcomingCount">0</div>
+                    <div class="stat-label">Total Today</div>
+                </div>
+            </div>
 
-  <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzVD4-d_qosjhbByFAsH87PrMj6jIEKTp_GKlAOZ199lKy0pHX3DAT7oADHVXcVVy8euw/exec"; // <-- replace this
+            <div id="medicineContent" class="loading">
+                Loading medicine schedule from Google Sheets...
+            </div>
 
-  // generate 30 rows initially
-  function generateRows() {
-    const tbody = document.querySelector("#dash tbody");
-    const today = new Date();
-    for (let i=1; i<=30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + (i-1));
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${i}</td>
-        <td>${date.toISOString().split("T")[0]}</td>
-        <td><input type="checkbox" class="cb" data-time="Morning" onchange="updateRow(this.closest('tr'))"></td>
-        <td><input type="checkbox" class="cb" data-time="Afternoon" onchange="updateRow(this.closest('tr'))"></td>
-        <td><input type="checkbox" class="cb" data-time="Evening" onchange="updateRow(this.closest('tr'))"></td>
-        <td><input type="checkbox" class="cb" data-time="Night" onchange="updateRow(this.closest('tr'))"></td>
-        <td class="progress">0%</td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
+            <div class="family-section">
+                <div class="family-header">
+                    <div class="family-title">🏠 Family Features</div>
+                </div>
+                
+                <div class="feature-grid">
+                    <div class="feature-card" onclick="openCalendar()">
+                        <div class="feature-icon">📅</div>
+                        <div class="feature-title">Family Calendar</div>
+                        <div class="feature-desc">Create medicine reminders & view family events</div>
+                    </div>
+                    
+                    <div class="feature-card" onclick="openLocationTracker()">
+                        <div class="feature-icon">📍</div>
+                        <div class="feature-title">Family Locations</div>
+                        <div class="feature-desc">Track family member locations safely</div>
+                    </div>
+                    
+                    <div class="feature-card" onclick="openReports()">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-title">Progress Reports</div>
+                        <div class="feature-desc">View detailed adherence analytics</div>
+                    </div>
+                    
+                    <div class="feature-card" onclick="openSettings()">
+                        <div class="feature-icon">⚙️</div>
+                        <div class="feature-title">Settings</div>
+                        <div class="feature-desc">Configure sheets, notifications & permissions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  function updateRow(tr) {
-    const inputs = Array.from(tr.querySelectorAll("input.cb"));
-    const total = inputs.length;
-    const done = inputs.filter(i=>i.checked).length;
-    tr.querySelector(".progress").innerText = Math.round(done/total*100) + "%";
-  }
+    <!-- Modals -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('settingsModal')">&times;</span>
+            <h3>⚙️ App Settings</h3>
+            
+            <div class="config-section">
+                <h4>📊 Google Sheets Configuration</h4>
+                <div class="config-item">
+                    <label>Medicine Schedule Sheet ID:</label>
+                    <input type="text" id="scheduleSheetId" class="config-input" 
+                           placeholder="Enter Google Sheet ID for medicine schedule">
+                </div>
+                <div class="config-item">
+                    <label>Progress Tracking Sheet ID:</label>
+                    <input type="text" id="progressSheetId" class="config-input" 
+                           placeholder="Enter Google Sheet ID for progress tracking">
+                </div>
+                <button onclick="saveSheetConfig()" style="background: #48bb78; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Save Configuration
+                </button>
+            </div>
 
-  async function load() {
-    try {
-      const res = await fetch(API_URL);
-      const data = await res.json();
+            <div class="config-section">
+                <h4>🔔 Permissions Status</h4>
+                <div class="config-item">
+                    <label>Google Sheets:</label>
+                    <span id="sheetsPermission" class="permission-status granted">✅ Granted</span>
+                </div>
+                <div class="config-item">
+                    <label>Google Calendar:</label>
+                    <span id="calendarPermission" class="permission-status pending">⏳ Pending</span>
+                </div>
+                <div class="config-item">
+                    <label>Location Services:</label>
+                    <span id="locationPermission" class="permission-status pending">⏳ Pending</span>
+                </div>
+                <div class="config-item">
+                    <label>Notifications:</label>
+                    <span id="notificationPermission" class="permission-status pending">⏳ Pending</span>
+                </div>
+                <button onclick="requestAllPermissions()" style="background: #4299e1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Request All Permissions
+                </button>
+            </div>
+        </div>
+    </div>
 
-      document.querySelectorAll('#dash tbody tr').forEach((tr, idx) => {
-        if (idx+1 < data.length) {
-          const row = data[idx+1]; // skip header row
-          const vals = {Morning: row[2], Afternoon: row[3], Evening: row[4], Night: row[5]};
-          tr.querySelectorAll('input.cb').forEach(cb => {
-            cb.checked = vals[cb.dataset.time] == 1;
-          });
-          updateRow(tr);
+    <div id="locationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('locationModal')">&times;</span>
+            <h3>📍 Family Locations</h3>
+            <div id="locationList"></div>
+            <div style="margin-top: 20px;">
+                <button onclick="refreshLocations()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    🔄 Refresh Locations
+                </button>
+                <button onclick="shareLocation()" style="background: #48bb78; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-left: 10px;">
+                    📤 Share My Location
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('reportsModal')">&times;</span>
+            <h3>📈 Progress Reports</h3>
+            <div id="reportsContent">Loading reports from Google Sheets...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            GOOGLE_CLIENT_ID: '982430621115-935nc05stfr9g312t4rsn1oleoagc1i6.apps.googleusercontent.com', // Replace with your actual client ID
+            GOOGLE_API_KEY: 'AIzaSyCLy3jYLffttklBEovC0MYSzr4m85yUboI', // Replace with your actual API key
+            SCOPES: [
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/calendar',
+                'https://www.googleapis.com/auth/drive.readonly'
+            ].join(' '),
+            DISCOVERY_DOCS: [
+                'https://sheets.googleapis.com/$discovery/rest?version=v4',
+                'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
+            ],
+            SCHEDULE_SHEET_ID: '', // Will be configured by user
+            PROGRESS_SHEET_ID: '' // Will be configured by user
+        };
+
+        // Global variables
+        let currentDay = 1;
+        let medicineSchedule = {};
+        let medicineStatus = {};
+        let isSignedIn = false;
+        let userProfile = null;
+        let watchPosition = null;
+
+        // Initialize the app
+        function initializeApp() {
+            loadGoogleAPI();
+            setupEventListeners();
+            checkStoredConfig();
+            updateDateDisplay();
         }
-      });
-    } catch (e) {
-      console.error("Error loading data:", e);
-    }
-  }
 
-  async function saveAll() {
-    document.querySelectorAll("#dash tbody tr").forEach(async (tr, idx) => {
-      const day = idx + 1;
-      const payload = {
-        day: day,
-        morning: tr.querySelector("input[data-time='Morning']").checked ? 1 : 0,
-        afternoon: tr.querySelector("input[data-time='Afternoon']").checked ? 1 : 0,
-        evening: tr.querySelector("input[data-time='Evening']").checked ? 1 : 0,
-        night: tr.querySelector("input[data-time='Night']").checked ? 1 : 0
-      };
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-    });
-    alert("Progress saved successfully.");
-  }
+        function loadGoogleAPI() {
+            gapi.load('auth2', initAuth);
+        }
 
-  window.onload = () => { 
-    generateRows();
-    load(); 
-  };
-  </script>
+        function initAuth() {
+            gapi.load('client:auth2', async () => {
+                try {
+                    await gapi.client.init({
+                        apiKey: CONFIG.GOOGLE_API_KEY,
+                        clientId: CONFIG.GOOGLE_CLIENT_ID,
+                        discoveryDocs: CONFIG.DISCOVERY_DOCS,
+                        scope: CONFIG.SCOPES
+                    });
+
+                    const authInstance = gapi.auth2.getAuthInstance();
+                    isSignedIn = authInstance.isSignedIn.get();
+                    
+                    if (isSignedIn) {
+                        handleSignIn();
+                    } else {
+                        showAuthSection();
+                    }
+
+                    // Listen for sign-in state changes
+                    authInstance.isSignedIn.listen(updateSigninStatus);
+                } catch (error) {
+                    console.error('Error initializing Google API:', error);
+                    updateSyncStatus('error', 'Failed to initialize Google services');
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('googleSignInBtn').addEventListener('click', signIn);
+            document.getElementById('signOutBtn').addEventListener('click', signOut);
+        }
+
+        function checkStoredConfig() {
+            const scheduleId = localStorage.getItem('scheduleSheetId');
+            const progressId = localStorage.getItem('progressSheetId');
+            
+            if (scheduleId) {
+                CONFIG.SCHEDULE_SHEET_ID = scheduleId;
+                document.getElementById('scheduleSheetId').value = scheduleId;
+            }
+            if (progressId) {
+                CONFIG.PROGRESS_SHEET_ID = progressId;
+                document.getElementById('progressSheetId').value = progressId;
+            }
+        }
+
+        async function signIn() {
+            try {
+                const authInstance = gapi.auth2.getAuthInstance();
+                await authInstance.signIn();
+            } catch (error) {
+                console.error('Sign in failed:', error);
+                alert('Sign in failed. Please try again.');
+            }
+        }
+
+        function signOut() {
+            const authInstance = gapi.auth2.getAuthInstance();
+            authInstance.signOut();
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                handleSignIn();
+            } else {
+                showAuthSection();
+            }
+        }
+
+        function handleSignIn() {
+            const authInstance = gapi.auth2.getAuthInstance();
+            const user = authInstance.currentUser.get();
+            userProfile = user.getBasicProfile();
+
+            // Update UI with user info
+            document.getElementById('userName').textContent = userProfile.getName();
+            document.getElementById('userEmail').textContent = userProfile.getEmail();
+            document.getElementById('userAvatar').src = userProfile.getImageUrl();
+
+            showMainApp();
+            loadMedicineScheduleFromSheet();
+            requestPermissions();
+        }
+
+        function showAuthSection() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+
+        async function loadMedicineScheduleFromSheet() {
+            if (!CONFIG.SCHEDULE_SHEET_ID) {
+                updateSyncStatus('error', 'Please configure Google Sheets in Settings');
+                return;
+            }
+
+            try {
+                updateSyncStatus('syncing', 'Loading medicine schedule...');
+
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: CONFIG.SCHEDULE_SHEET_ID,
+                    range: 'Schedule!A:E' // Adjust range based on your sheet structure
+                });
+
+                const values = response.result.values;
+                if (values && values.length > 1) {
+                    processMedicineSchedule(values);
+                    loadMedicineUI();
+                    updateSyncStatus('synced', 'Medicine schedule loaded');
+                } else {
+                    updateSyncStatus('error', 'No data found in medicine schedule sheet');
+                }
+            } catch (error) {
+                console.error('Error loading medicine schedule:', error);
+                updateSyncStatus('error', 'Failed to load medicine schedule');
+                loadFallbackSchedule(); // Load local fallback
+            }
+        }
+
+        function processMedicineSchedule(values) {
+            medicineSchedule = { morning: [], afternoon: [], evening: [], night: [] };
+            
+            // Skip header row, process data rows
+            for (let i = 1; i < values.length; i++) {
+                const [medicine, time, food, timeCategory] = values[i];
+                if (medicine && time) {
+                    const category = (timeCategory || categorizeTime(time)).toLowerCase();
+                    if (medicineSchedule[category]) {
+                        medicineSchedule[category].push({
+                            name: medicine,
+                            time: time,
+                            food: food || 'After Food'
+                        });
+                    }
+                }
+            }
+        }
+
+        function categorizeTime(timeStr) {
+            const hour = parseInt(timeStr.match(/\d+/)?.[0] || '0');
+            if (hour >= 6 && hour < 12) return 'morning';
+            if (hour >= 12 && hour < 17) return 'afternoon';
+            if (hour >= 17 && hour < 21) return 'evening';
+            return 'night';
+        }
+
+        function loadFallbackSchedule() {
+            // Fallback to the original schedule from your PDF
+            medicineSchedule = {
+                morning: [
+                    { name: 'Pantocid 40mg', time: '7 AM', food: 'Before Breakfast' },
+                    { name: 'Taxim-O 200mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Levipl 250mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Istavel D 10/100mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Dytor 10mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Udiliv 300mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Maxliv 500mg', time: '8 AM', food: 'After Food' },
+                    { name: 'Hepamerz', time: '8 AM', food: 'After Food' }
+                ],
+                afternoon: [
+                    { name: 'Metolazone 5mg', time: '1 PM', food: 'After Food' },
+                    { name: 'Dytor 10mg', time: '4 PM', food: 'After Food' }
+                ],
+                evening: [
+                    { name: 'Taxim-O 200mg', time: '8 PM', food: 'After Food' },
+                    { name: 'Levipl 250mg', time: '8 PM', food: 'After Food' },
+                    { name: 'Udiliv 300mg', time: '8 PM', food: 'After Food' },
+                    { name: 'Maxliv 500mg', time: '8 PM', food: 'After Food' }
+                ],
+                night: [
+                    { name: 'Ecosprin Gold 10/75mg', time: '9 PM', food: 'After Food' },
+                    { name: 'Concor-Cor 1.25mg', time: '9 PM', food: 'After Food' },
+                    { name: 'Lactihep Syrup 30ml', time: '9 PM (SOS)', food: 'After Food' }
+                ]
+            };
+            loadMedicineUI();
+            updateSyncStatus('error', 'Using offline schedule - configure Google Sheets in Settings');
+        }
+
+        function loadMedicineUI() {
+            const medicineContent = document.getElementById('medicineContent');
+            medicineContent.innerHTML = '';
+
+            const medicineGrid = document.createElement('div');
+            medicineGrid.className = 'medicine-grid';
+
+            const sections = [
+                { key: 'morning', title: 'Morning', icon: '🌅', class: 'morning' },
+                { key: 'afternoon', title: 'Afternoon', icon: '☀️', class: 'afternoon' },
+                { key: 'evening', title: 'Evening', icon: '🌆', class: 'evening' },
+                { key: 'night', title: 'Night', icon: '🌙', class: 'night' }
+            ];
+
+            sections.forEach(section => {
+                const timeSection = document.createElement('div');
+                timeSection.className = 'time-section';
+                
+                timeSection.innerHTML = `
+                    <div class="time-header">
+                        <div class="time-icon ${section.class}">${section.icon}</div>
+                        <div class="time-title">${section.title}</div>
+                    </div>
+                    <div id="${section.key}Meds"></div>
+                `;
+                
+                medicineGrid.appendChild(timeSection);
+                loadSectionMedicines(section.key);
+            });
+
+            medicineContent.appendChild(medicineGrid);
+            updateStats();
+        }
+
+        function loadSectionMedicines(sectionKey) {
+            const container = document.getElementById(sectionKey + 'Meds');
+            container.innerHTML = '';
+            
+            if (!medicineSchedule[sectionKey]) return;
+
+            medicineSchedule[sectionKey].forEach((med, index) => {
+                const medId = `${sectionKey}-${index}`;
+                const dayKey = `day-${currentDay}`;
+                const isChecked = medicineStatus[dayKey]?.[medId] || false;
+                
+                const medItem = document.createElement('div');
+                medItem.className = `medicine-item ${isChecked ? 'taken' : ''}`;
+                medItem.innerHTML = `
+                    <input type="checkbox" class="medicine-checkbox" 
+                           id="${medId}" ${isChecked ? 'checked' : ''} 
+                           onchange="toggleMedicine('${medId}')">
+                    <div class="medicine-info">
+                        <div class="medicine-name">${med.name}</div>
+                        <div class="medicine-details">${med.time} - ${med.food}</div>
+                    </div>
+                `;
+                container.appendChild(medItem);
+            });
+        }
+
+        async function toggleMedicine(medId) {
+            const dayKey = `day-${currentDay}`;
+            if (!medicineStatus[dayKey]) {
+                medicineStatus[dayKey] = {};
+            }
+            
+            medicineStatus[dayKey][medId] = !medicineStatus[dayKey][medId];
+            
+            // Update visual state
+            const checkbox = document.getElementById(medId);
+            const item = checkbox.parentElement;
+            
+            if (checkbox.checked) {
+                item.classList.add('taken');
+            } else {
+                item.classList.remove('taken');
+            }
+            
+            updateStats();
+            await saveProgressToSheet(medId, checkbox.checked);
+        }
+
+        async function saveProgressToSheet(medId, taken) {
+            if (!CONFIG.PROGRESS_SHEET_ID) {
+                console.log('Progress sheet not configured');
+                return;
+            }
+
+            try {
+                const timestamp = new Date().toISOString();
+                const values = [[
+                    currentDay,
+                    new Date().toDateString(),
+                    medId,
+                    taken ? 'Taken' : 'Missed',
+                    timestamp,
+                    userProfile?.getName() || 'Unknown'
+                ]];
+
+                await gapi.client.sheets.spreadsheets.values.append({
+                    spreadsheetId: CONFIG.PROGRESS_SHEET_ID,
+                    range: 'Progress!A:F',
+                    valueInputOption: 'RAW',
+                    insertDataOption: 'INSERT_ROWS',
+                    resource: { values: values }
+                });
+
+                updateSyncStatus('synced', 'Progress saved to Google Sheets');
+            } catch (error) {
+                console.error('Error saving progress:', error);
+                updateSyncStatus('error', 'Failed to save progress');
+            }
+        }
+
+        function updateStats() {
+            const dayKey = `day-${currentDay}`;
+            const dayData = medicineStatus[dayKey] || {};
+            
+            const totalMeds = Object.values(medicineSchedule).reduce((sum, section) => sum + section.length, 0);
+            const taken = Object.values(dayData).filter(status => status).length;
+            const missed = totalMeds - taken;
+            
+            document.getElementById('takenCount').textContent = taken;
+            document.getElementById('missedCount').textContent = missed;
+            document.getElementById('upcomingCount').textContent = totalMeds;
+        }
+
+        function changeDate(direction) {
+            currentDay = Math.max(1, Math.min(30, currentDay + direction));
+            updateDateDisplay();
+            loadMedicineUI();
+        }
+
+        function updateDateDisplay() {
+            const today = new Date();
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + (currentDay - 1));
+            
+            const dateStr = targetDate.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('currentDate').textContent = 
+                `Day ${currentDay} - ${currentDay === 1 ? 'Today' : dateStr}`;
+        }
+
+        function updateSyncStatus(type, message) {
+            const statusEl = document.getElementById('syncStatus');
+            const textEl = document.getElementById('syncText');
+            
+            statusEl.className = `sync-status ${type}`;
+            textEl.textContent = message;
+            
+            const icons = {
+                syncing: '🔄',
+                synced: '✅',
+                error: '❌'
+            };
+            
+            statusEl.querySelector('span').textContent = icons[type] || '🔄';
+        }
+
+        // Calendar Integration
+        async function openCalendar() {
+            try {
+                // Create medicine reminder events
+                const today = new Date();
+                const events = [];
+                
+                Object.entries(medicineSchedule).forEach(([timeKey, medicines]) => {
+                    medicines.forEach(med => {
+                        const eventTime = parseTimeString(med.time);
+                        const event = {
+                            summary: `💊 ${med.name}`,
+                            description: `Take ${med.name} - ${med.food}`,
+                            start: {
+                                dateTime: eventTime.toISOString(),
+                                timeZone: 'Asia/Kolkata'
+                            },
+                            end: {
+                                dateTime: new Date(eventTime.getTime() + 15 * 60000).toISOString(),
+                                timeZone: 'Asia/Kolkata'
+                            },
+                            recurrence: ['RRULE:FREQ=DAILY;COUNT=30']
+                        };
+                        events.push(event);
+                    });
+                });
+
+                // Create events in Google Calendar
+                for (const event of events) {
+                    await gapi.client.calendar.events.insert({
+                        calendarId: 'primary',
+                        resource: event
+                    });
+                }
+
+                alert('✅ Medicine reminders created in Google Calendar!');
+            } catch (error) {
+                console.error('Calendar error:', error);
+                // Fallback to opening Google Calendar
+                window.open('https://calendar.google.com', '_blank');
+            }
+        }
+
+        function parseTimeString(timeStr) {
+            const now = new Date();
+            const match = timeStr.match(/(\d+)\s*(AM|PM)/i);
+            if (match) {
+                let hour = parseInt(match[1]);
+                const ampm = match[2].toUpperCase();
+                
+                if (ampm === 'PM' && hour !== 12) hour += 12;
+                if (ampm === 'AM' && hour === 12) hour = 0;
+                
+                const eventDate = new Date(now);
+                eventDate.setHours(hour, 0, 0, 0);
+                return eventDate;
+            }
+            return now;
+        }
+
+        // Location Services
+        async function requestPermissions() {
+            // Request notification permission
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                updatePermissionStatus('notificationPermission', permission);
+            }
+
+            // Request location permission
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    () => updatePermissionStatus('locationPermission', 'granted'),
+                    () => updatePermissionStatus('locationPermission', 'denied')
+                );
+            }
+
+            // Calendar permission (already handled by Google Auth)
+            updatePermissionStatus('calendarPermission', 'granted');
+        }
+
+        function updatePermissionStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            element.className = `permission-status ${status}`;
+            
+            const statusText = {
+                granted: '✅ Granted',
+                denied: '❌ Denied',
+                pending: '⏳ Pending'
+            };
+            
+            element.textContent = statusText[status] || '⏳ Pending';
+        }
+
+        function openLocationTracker() {
+            document.getElementById('locationModal').style.display = 'flex';
+            loadFamilyLocations();
+        }
+
+        function loadFamilyLocations() {
+            const locationList = document.getElementById('locationList');
+            locationList.innerHTML = '<div class="loading">Loading family locations...</div>';
+
+            // Simulate loading family locations
+            setTimeout(() => {
+                locationList.innerHTML = `
+                    <div class="location-item">
+                        <div>
+                            <strong>${userProfile?.getName() || 'You'}</strong><br>
+                            <small>Current location • Just now</small>
+                        </div>
+                        <span class="location-status status-home">🏠 Home</span>
+                    </div>
+                    <div class="location-item">
+                        <div>
+                            <strong>Family Member 1</strong><br>
+                            <small>Last seen: 15 mins ago</small>
+                        </div>
+                        <span class="location-status status-away">🏢 Work</span>
+                    </div>
+                    <div class="location-item">
+                        <div>
+                            <strong>Family Member 2</strong><br>
+                            <small>Last seen: 2 hours ago</small>
+                        </div>
+                        <span class="location-status status-away">🏫 School</span>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function refreshLocations() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const { latitude, longitude } = position.coords;
+                    console.log('Current location:', latitude, longitude);
+                    loadFamilyLocations();
+                    alert(`📍 Location updated!\nLat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`);
+                }, (error) => {
+                    alert('❌ Unable to get location. Please check permissions.');
+                });
+            }
+        }
+
+        function shareLocation() {
+            if ('geolocation' in navigator && 'share' in navigator) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    try {
+                        await navigator.share({
+                            title: 'My Current Location',
+                            text: `I'm currently at:`,
+                            url: `https://maps.google.com?q=${latitude},${longitude}`
+                        });
+                    } catch (error) {
+                        // Fallback to copying to clipboard
+                        const url = `https://maps.google.com?q=${latitude},${longitude}`;
+                        navigator.clipboard.writeText(url);
+                        alert('📋 Location link copied to clipboard!');
+                    }
+                });
+            } else {
+                alert('❌ Location sharing not supported on this device.');
+            }
+        }
+
+        // Reports and Analytics
+        async function openReports() {
+            document.getElementById('reportsModal').style.display = 'flex';
+            await loadProgressReports();
+        }
+
+        async function loadProgressReports() {
+            const reportsContent = document.getElementById('reportsContent');
+            
+            if (!CONFIG.PROGRESS_SHEET_ID) {
+                reportsContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <h4>📊 Configure Progress Sheet</h4>
+                        <p>Please configure your Progress Tracking Sheet in Settings to view detailed reports.</p>
+                        <button onclick="closeModal('reportsModal'); openSettings();" 
+                                style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 15px;">
+                            Open Settings
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: CONFIG.PROGRESS_SHEET_ID,
+                    range: 'Progress!A:F'
+                });
+
+                const values = response.result.values || [];
+                generateReportsUI(values);
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                reportsContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #f56565;">
+                        <h4>❌ Failed to Load Reports</h4>
+                        <p>Unable to fetch data from Google Sheets. Please check your configuration.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function generateReportsUI(data) {
+            const reportsContent = document.getElementById('reportsContent');
+            
+            if (data.length <= 1) {
+                reportsContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <h4>📈 No Data Yet</h4>
+                        <p>Start tracking medicines to see your progress reports here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Calculate statistics
+            const totalEntries = data.length - 1; // Exclude header
+            const takenCount = data.slice(1).filter(row => row[3] === 'Taken').length;
+            const adherenceRate = ((takenCount / totalEntries) * 100).toFixed(1);
+            
+            // Generate weekly data
+            const weeklyData = generateWeeklyData(data.slice(1));
+            
+            reportsContent.innerHTML = `
+                <div style="margin-bottom: 30px;">
+                    <h4>📊 Overall Statistics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+                        <div style="background: #f0fff4; padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #48bb78;">${adherenceRate}%</div>
+                            <div style="color: #666;">Adherence Rate</div>
+                        </div>
+                        <div style="background: #f7fafc; padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #4299e1;">${takenCount}</div>
+                            <div style="color: #666;">Medicines Taken</div>
+                        </div>
+                        <div style="background: #fef5e7; padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #d69e2e;">${totalEntries - takenCount}</div>
+                            <div style="color: #666;">Missed Doses</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>📈 Weekly Progress</h4>
+                    ${weeklyData.map(week => `
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>${week.week}</strong>
+                                <span style="color: ${week.rate >= 90 ? '#48bb78' : week.rate >= 75 ? '#d69e2e' : '#f56565'};">
+                                    ${week.rate}% adherence
+                                </span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                ${week.taken} out of ${week.total} medicines taken
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function generateWeeklyData(data) {
+            // This is a simplified version - you'd implement proper weekly grouping
+            const weeks = [];
+            const totalEntries = Math.min(data.length, 50); // Last 50 entries
+            const recentData = data.slice(-totalEntries);
+            
+            const taken = recentData.filter(row => row[3] === 'Taken').length;
+            const rate = ((taken / totalEntries) * 100).toFixed(1);
+            
+            weeks.push({
+                week: 'This Week',
+                taken: taken,
+                total: totalEntries,
+                rate: rate
+            });
+            
+            return weeks;
+        }
+
+        // Settings and Configuration
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function saveSheetConfig() {
+            const scheduleId = document.getElementById('scheduleSheetId').value.trim();
+            const progressId = document.getElementById('progressSheetId').value.trim();
+            
+            if (scheduleId) {
+                CONFIG.SCHEDULE_SHEET_ID = scheduleId;
+                localStorage.setItem('scheduleSheetId', scheduleId);
+            }
+            
+            if (progressId) {
+                CONFIG.PROGRESS_SHEET_ID = progressId;
+                localStorage.setItem('progressSheetId', progressId);
+            }
+            
+            alert('✅ Configuration saved! Reloading medicine schedule...');
+            loadMedicineScheduleFromSheet();
+        }
+
+        function requestAllPermissions() {
+            requestPermissions();
+            alert('🔔 Permission requests sent! Please allow permissions in your browser.');
+        }
+
+        // Utility Functions
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+
+        // Notification helpers
+        function scheduleNotifications() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                Object.entries(medicineSchedule).forEach(([timeKey, medicines]) => {
+                    medicines.forEach(med => {
+                        const eventTime = parseTimeString(med.time);
+                        const now = new Date();
+                        const timeUntilNotification = eventTime.getTime() - now.getTime();
+                        
+                        if (timeUntilNotification > 0) {
+                            setTimeout(() => {
+                                new Notification('💊 Medicine Reminder', {
+                                    body: `Time to take ${med.name}`,
+                                    icon: '/icon-192x192.png' // Add your app icon
+                                });
+                            }, timeUntilNotification);
+                        }
+                    });
+                });
+            }
+        }
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
 </body>
 </html>

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Medicine Tracker - Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .setup-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .step {
+            display: none;
+            animation: slideIn 0.5s ease-in-out;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], input[type="email"], select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .success-message {
+            text-align: center;
+            color: #48bb78;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #f56565;
+            font-size: 1rem;
+            margin: 15px 0;
+        }
+
+        .info-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .checklist li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .copy-button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .family-member-card {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fef5e7; color: #744210; }
+        .status-setup { background: #e6fffa; color: #234e52; }
+        .status-ready { background: #c6f6d5; color: #22543d; }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <h1>🏥 Family Medicine Tracker</h1>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progressBar" style="width: 20%"></div>
+        </div>
+
+        <!-- Step 1: Google Cloud Setup -->
+        <div class="step active" id="step1">
+            <h2>Step 1: Google Cloud Console Setup</h2>
+            <div class="info-card">
+                <p><strong>🔐 First, let's set up Google Cloud Console to get your API keys.</strong></p>
+                <p>This will enable integration with Google Sheets, Calendar, and Location services.</p>
+            </div>
+            
+            <div class="checklist">
+                <li>Create Google Cloud Project</li>
+                <li>Enable Required APIs (Sheets, Calendar, Drive, Maps)</li>
+                <li>Create API Key and OAuth Client ID</li>
+                <li>Configure authorized domains</li>
+            </div>
+
+            <div class="info-card">
+                <p><strong>💡 Tip:</strong> Have your GitHub Pages URL ready: <code>https://yourusername.github.io</code></p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" disabled>Previous</button>
+                <button class="btn-primary" onclick="nextStep()">I'm Ready - Let's Start!</button>
+            </div>
+        </div>
+
+        <!-- Step 2: API Configuration -->
+        <div class="step" id="step2">
+            <h2>Step 2: Enter Your API Credentials</h2>
+            
+            <div class="form-group">
+                <label for="clientId">Google OAuth Client ID:</label>
+                <input type="text" id="clientId" placeholder="your_client_id.apps.googleusercontent.com">
+                <small style="color: #666;">From Google Cloud Console → APIs & Services → Credentials</small>
+            </div>
+
+            <div class="form-group">
+                <label for="apiKey">Google API Key:</label>
+                <input type="text" id="apiKey" placeholder="your_api_key_here">
+                <small style="color: #666;">From Google Cloud Console → APIs & Services → Credentials</small>
+            </div>
+
+            <div class="info-card">
+                <p><strong>🔒 Security Note:</strong> These credentials will be saved locally in your browser. Make sure to restrict your API keys to your domain only.</p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="validateAndNext()">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Google Sheets Setup -->
+        <div class="step" id="step3">
+            <h2>Step 3: Create Google Sheets</h2>
+            
+            <div class="info-card">
+                <p><strong>📊 We need to create two Google Sheets:</strong></p>
+                <ol>
+                    <li><strong>Medicine Schedule Sheet:</strong> Contains medicine names, times, and instructions</li>
+                    <li><strong>Progress Tracking Sheet:</strong> Records when medicines are taken</li>
+                </ol>
+            </div>
+
+            <div class="form-group">
+                <label>Medicine Schedule Sheet Template:</label>
+                <div class="code-block">
+Medicine | Time | Food | Category
+Pantocid 40mg | 7 AM | Before Breakfast | Morning
+Taxim-O 200mg | 8 AM | After Food | Morning
+Levipl 250mg | 8 AM | After Food | Morning
+Istavel D 10/100mg | 8 AM | After Food | Morning
+Dytor 10mg | 8 AM | After Food | Morning
+Metolazone 5mg | 1 PM | After Food | Afternoon
+Dytor 10mg | 4 PM | After Food | Afternoon
+Taxim-O 200mg | 8 PM | After Food | Evening
+Levipl 250mg | 8 PM | After Food | Evening
+Udiliv 300mg | 8 PM | After Food | Evening
+Maxliv 500mg | 8 PM | After Food | Evening
+Ecosprin Gold 10/75mg | 9 PM | After Food | Night
+Concor-Cor 1.25mg | 9 PM | After Food | Night
+Lactihep Syrup 30ml | 9 PM (SOS) | After Food | Night
+                </div>
+                <button class="copy-button" onclick="copyToClipboard('schedule-template')">Copy Template</button>
+            </div>
+
+            <div class="form-group">
+                <label for="scheduleSheetId">Medicine Schedule Sheet ID:</label>
+                <input type="text" id="scheduleSheetId" placeholder="Get this from the Google Sheet URL">
+                <small style="color: #666;">Create the sheet, then copy the ID from the URL</small>
+            </div>
+
+            <div class="form-group">
+                <label for="progressSheetId">Progress Tracking Sheet ID:</label>
+                <input type="text" id="progressSheetId" placeholder="Create another sheet for progress tracking">
+                <small style="color: #666;">This sheet can be empty - the app will populate it automatically</small>
+            </div>
+
+            <div class="info-card">
+                <p><strong>📝 How to get Sheet ID:</strong></p>
+                <ol>
+                    <li>Open your Google Sheet</li>
+                    <li>Look at the URL: <code>https://docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit</code></li>
+                    <li>Copy the SHEET_ID part</li>
+                </ol>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="validateSheetsAndNext()">Next</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Family Members Setup -->
+        <div class="step" id="step4">
+            <h2>Step 4: Add Family Members</h2>
+            
+            <div class="info-card">
+                <p><strong>👨‍👩‍👧‍👦 Add family members who will use the medicine tracker.</strong></p>
+                <p>Each person will need their own Google account to access the app.</p>
+            </div>
+
+            <div id="familyMembers">
+                <div class="form-group">
+                    <label>Primary Caregiver (You):</label>
+                    <input type="email" id="primaryEmail" placeholder="your.email@gmail.com" required>
+                </div>
+            </div>
+
+            <button class="btn-secondary" onclick="addFamilyMember()" style="margin: 20px 0;">+ Add Family Member</button>
+
+            <div class="info-card">
+                <p><strong>🔐 Roles & Permissions:</strong></p>
+                <ul>
+                    <li><strong>Primary Caregiver:</strong> Full access, can modify schedules</li>
+                    <li><strong>Family Member:</strong> Can view progress, mark medicines taken</li>
+                    <li><strong>Child:</strong> Limited access, parent-controlled</li>
+                </ul>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="setupFamilyAccess()">Setup Family Access</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Share Sheets -->
+        <div class="step" id="step5">
+            <h2>Step 5: Share Google Sheets</h2>
+            
+            <div class="info-card">
+                <p><strong>📤 Now we'll share the Google Sheets with your family members.</strong></p>
+            </div>
+
+            <div id="sharingInstructions">
+                <p><strong>For each Google Sheet:</strong></p>
+                <ol>
+                    <li>Open your Medicine Schedule sheet</li>
+                    <li>Click the "Share" button (top right)</li>
+                    <li>Add these email addresses with "Editor" access:</li>
+                </ol>
+
+                <div id="emailList" class="code-block">
+                    <!-- Family emails will be populated here -->
+                </div>
+                <button class="copy-button" onclick="copyFamilyEmails()">Copy All Emails</button>
+
+                <ol start="4">
+                    <li>Repeat for your Progress Tracking sheet</li>
+                    <li>Enable "Notify people" to send invitations</li>
+                    <li>Click "Send"</li>
+                </ol>
+            </div>
+
+            <div class="info-card">
+                <p><strong>💡 Pro Tip:</strong> Create a Google Group (like family-medicine@googlegroups.com) and share with the group instead of individual emails. This makes management easier!</p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="nextStep()">Sheets Shared - Continue</button>
+            </div>
+        </div>
+
+        <!-- Step 6: Location & Calendar Setup -->
+        <div class="step" id="step6">
+            <h2>Step 6: Location & Calendar Setup</h2>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enableLocation" checked> 
+                    Enable Family Location Sharing
+                </label>
+                <small style="color: #666;">Family members can see each other's locations for safety</small>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enableCalendar" checked> 
+                    Create Medicine Reminders in Google Calendar
+                </label>
+                <small style="color: #666;">Automatic calendar events for medicine times</small>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enableNotifications" checked> 
+                    Enable Push Notifications
+                </label>
+                <small style="color: #666;">Get notified when it's time to take medicines</small>
+            </div>
+
+            <div class="info-card">
+                <p><strong>🏠 Location Features:</strong></p>
+                <ul>
+                    <li>See when family members arrive home safely</li>
+                    <li>Get alerts when someone needs help with medicines</li>
+                    <li>Find nearby pharmacies when medicines run low</li>
+                    <li>All location data is private and only shared with family</li>
+                </ul>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="nextStep()">Configure Features</button>
+            </div>
+        </div>
+
+        <!-- Step 7: Generate Configuration -->
+        <div class="step" id="step7">
+            <h2>Step 7: Download Configuration File</h2>
+            
+            <div class="info-card">
+                <p><strong>🎯 Almost done! Here's your personalized configuration file.</strong></p>
+                <p>Save this as <code>family-config.js</code> in your project folder.</p>
+            </div>
+
+            <div class="code-block" id="configOutput">
+                <!-- Generated configuration will appear here -->
+            </div>
+            <button class="copy-button" onclick="downloadConfig()">Download Configuration</button>
+
+            <div class="info-card">
+                <p><strong>📝 Next Steps:</strong></p>
+                <ol>
+                    <li>Save the configuration file in your project</li>
+                    <li>Update your main HTML file to use the configuration</li>
+                    <li>Deploy to GitHub Pages</li>
+                    <li>Test with your family!</li>
+                </ol>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="nextStep()">Complete Setup</button>
+            </div>
+        </div>
+
+        <!-- Step 8: Family Onboarding -->
+        <div class="step" id="step8">
+            <h2>Step 8: Family Member Onboarding</h2>
+            
+            <div class="success-message">
+                🎉 Configuration Complete! Now let's get your family onboard.
+            </div>
+
+            <div class="info-card">
+                <p><strong>📱 Share this with your family members:</strong></p>
+            </div>
+
+            <div id="familyStatus">
+                <!-- Family member status will be shown here -->
+            </div>
+
+            <div class="info-card">
+                <p><strong>📧 Onboarding Message Template:</strong></p>
+                <div class="code-block" id="onboardingMessage">
+Hi [Family Member],
+
+I've set up our Family Medicine Tracker! 🏥
+
+Here's how to get started:
+1. Visit: [YOUR_APP_URL]
+2. Sign in with your Google account
+3. Grant permissions when prompted
+4. Start tracking medicines!
+
+You'll be able to:
+✅ See medicine schedules
+✅ Mark medicines as taken
+✅ View family progress
+✅ Get reminders
+✅ Share location safely
+
+Any questions? Just ask!
+
+Love,
+[Your Name]
+                </div>
+                <button class="copy-button" onclick="copyOnboardingMessage()">Copy Message</button>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStep()">Previous</button>
+                <button class="btn-primary" onclick="completeSetup()">🎯 Launch Family Tracker!</button>
+            </div>
+        </div>
+
+        <!-- Final Step: Success -->
+        <div class="step" id="stepFinal">
+            <div style="text-align: center;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+                <h2>Family Medicine Tracker is Ready!</h2>
+                
+                <div class="success-message">
+                    Your family medicine tracking system is now set up and ready to use.
+                </div>
+
+                <div class="info-card">
+                    <p><strong>🚀 What happens next:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Deploy your app to GitHub Pages</li>
+                        <li>Family members will receive sheet sharing invitations</li>
+                        <li>They can access the app and start tracking</li>
+                        <li>You'll get notifications and reports automatically</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <p><strong>💡 Tips for Success:</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Test the app yourself first</li>
+                        <li>Help family members set up their first day</li>
+                        <li>Check the progress reports weekly</li>
+                        <li>Adjust notification settings as needed</li>
+                    </ul>
+                </div>
+
+                <button class="btn-primary" onclick="openApp()" style="margin-top: 30px; padding: 15px 40px; font-size: 1.2rem;">
+                    🏥 Open Medicine Tracker
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 8;
+        let familyMemberCount = 1;
+        let configData = {};
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep++;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep--;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+            }
+        }
+
+        function validateAndNext() {
+            const clientId = document.getElementById('clientId').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+
+            if (!clientId || !apiKey) {
+                alert('Please enter both Client ID and API Key');
+                return;
+            }
+
+            if (!clientId.includes('.apps.googleusercontent.com')) {
+                alert('Client ID should end with .apps.googleusercontent.com');
+                return;
+            }
+
+            configData.clientId = clientId;
+            configData.apiKey = apiKey;
+            nextStep();
+        }
+
+        function validateSheetsAndNext() {
+            const scheduleId = document.getElementById('scheduleSheetId').value.trim();
+            const progressId = document.getElementById('progressSheetId').value.trim();
+
+            if (!scheduleId || !progressId) {
+                alert('Please enter both Sheet IDs');
+                return;
+            }
+
+            configData.scheduleSheetId = scheduleId;
+            configData.progressSheetId = progressId;
+            nextStep();
+        }
+
+        function addFamilyMember() {
+            familyMemberCount++;
+            const container = document.getElementById('familyMembers');
+            const memberDiv = document.createElement('div');
+            memberDiv.className = 'form-group';
+            memberDiv.innerHTML = `
+                <label>Family Member ${familyMemberCount}:</label>
+                <input type="email" id="familyEmail${familyMemberCount}" placeholder="family.member@gmail.com">
+                <button type="button" onclick="removeFamilyMember(this)" style="background: #f56565; color: white; border: none; padding: 5px 10px; border-radius: 5px; margin-top: 5px;">Remove</button>
+            `;
+            container.appendChild(memberDiv);
+        }
+
+        function removeFamilyMember(button) {
+            button.parentElement.remove();
+        }
+
+        function setupFamilyAccess() {
+            const familyEmails = [];
+            
+            // Get primary email
+            const primaryEmail = document.getElementById('primaryEmail').value.trim();
+            if (primaryEmail) familyEmails.push(primaryEmail);
+
+            // Get family member emails
+            for (let i = 2; i <= familyMemberCount; i++) {
+                const email = document.getElementById(`familyEmail${i}`)?.value.trim();
+                if (email) familyEmails.push(email);
+            }
+
+            if (familyEmails.length === 0) {
+                alert('Please add at least the primary caregiver email');
+                return;
+            }
+
+            configData.familyEmails = familyEmails;
+            
+            // Update sharing instructions
+            const emailList = document.getElementById('emailList');
+            emailList.textContent = familyEmails.join('\n');
+
+            nextStep();
+        }
+
+        function copyFamilyEmails() {
+            const emails = configData.familyEmails.join('\n');
+            navigator.clipboard.writeText(emails).then(() => {
+                alert('Family emails copied to clipboard!');
+            });
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.querySelector(`#${elementId}`);
+            if (element) {
+                navigator.clipboard.writeText(element.textContent).then(() => {
+                    alert('Copied to clipboard!');
+                });
+            }
+        }
+
+        function generateConfiguration() {
+            const config = `// Family Medicine Tracker Configuration
+// Generated on ${new Date().toLocaleDateString()}
+
+const FAMILY_CONFIG = {
+    GOOGLE_CLIENT_ID: '${configData.clientId}',
+    GOOGLE_API_KEY: '${configData.apiKey}',
+    MEDICINE_SCHEDULE_SHEET_ID: '${configData.scheduleSheetId}',
+    PROGRESS_TRACKING_SHEET_ID: '${configData.progressSheetId}',
+    
+    FAMILY_MEMBERS: [
+        ${configData.familyEmails.map((email, index) => `{
+            id: 'member_${index + 1}',
+            email: '${email}',
+            role: ${index === 0 ? "'admin'" : "'member'"},
+            canEditSchedule: ${index === 0},
+            canViewAllProgress: true,
+            locationSharing: ${document.getElementById('enableLocation').checked}
+        }`).join(',\n        ')}
+    ],
+    
+    FEATURES: {
+        locationSharing: ${document.getElementById('enableLocation').checked},
+        calendarIntegration: ${document.getElementById('enableCalendar').checked},
+        pushNotifications: ${document.getElementById('enableNotifications').checked}
+    },
+    
+    SETUP_DATE: '${new Date().toISOString()}',
+    VERSION: '1.0.0'
+};
+
+// Export configuration
+if (typeof window !== 'undefined') {
+    window.FAMILY_CONFIG = FAMILY_CONFIG;
+}`;
+
+            return config;
+        }
+
+        function downloadConfig() {
+            const config = generateConfiguration();
+            const blob = new Blob([config], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'family-config.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyOnboardingMessage() {
+            const message = document.getElementById('onboardingMessage').textContent;
+            navigator.clipboard.writeText(message).then(() => {
+                alert('Onboarding message copied! Personalize it and send to your family.');
+            });
+        }
+
+        function completeSetup() {
+            // Generate configuration and show final step
+            const config = generateConfiguration();
+            document.getElementById('configOutput').textContent = config;
+            
+            // Show family status
+            const familyStatus = document.getElementById('familyStatus');
+            familyStatus.innerHTML = configData.familyEmails.map(email => `
+                <div class="family-member-card">
+                    <div>
+                        <strong>${email}</strong><br>
+                        <small>Medicine Tracker Access</small>
+                    </div>
+                    <span class="status-badge status-pending">Pending Setup</span>
+                </div>
+            `).join('');
+
+            currentStep = 'Final';
+            document.getElementById('step8').classList.remove('active');
+            document.getElementById('stepFinal').classList.add('active');
+            document.getElementById('progressBar').style.width = '100%';
+        }
+
+        function openApp() {
+            // In a real implementation, this would open the main app
+            alert('Deploy your app to GitHub Pages and share the URL with your family!');
+        }
+
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>
